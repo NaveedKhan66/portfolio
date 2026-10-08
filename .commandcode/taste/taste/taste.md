@@ -1,0 +1,19 @@
+# Taste
+- When giving a visual reference (screenshot/mockup), expects the implementation to match it faithfully — same font/type, same background imagery, exact wording — rather than an approximation or "inspired by" interpretation; asks for it to look "exactly the same" as the attached screenshot. Confidence: 0.75
+- Reports design mismatches as a numbered list of concrete visual deltas against the reference (e.g. "the image is too big", "the cursor should slowly bob"). Confidence: 0.5
+- When the reference is a live site, expects the agent to inspect the real page directly (via browser tooling such as agent-browser) and pull exact computed fonts/styles rather than approximating from a screenshot ("go check it out, check what fonts it is using, what styles"). Confidence: 0.6
+- Wants recurring design deltas resolved exhaustively in one pass — "fix this once and all for me" — rather than a partial fix that leaves the same mismatch to come back again ("Fix all these issues with my hero section"). Confidence: 0.6
+- Prefers the agent to stop and report back when a task can't be completed rather than going in loops with repeated retries ("if... you're not able to get it just come back and tell me, no need to go in loops"). Confidence: 0.8
+- When asked to fetch an asset for the project, expects it saved directly inside the project directory (e.g. `public/`) rather than left elsewhere. Confidence: 0.5
+- Builds front-end/portfolio work with Next.js App Router + Tailwind CSS (app/ directory, page.tsx, layout.tsx, globals.css, tailwind.config.js). Confidence: 0.5
+- Uses modern Tailwind (v4-style `@theme inline` tokens and custom `--animate-*` keyframes defined in globals.css) rather than a legacy JS config for design tokens. Confidence: 0.45
+- When matching a reference, cares about motion fidelity as much as visual fidelity — elements that are static in the original should stay static and elements that animate should animate (e.g. a dot that should not move, a name pill that should float), rather than the agent adding or removing motion on its own. Confidence: 0.6
+- Is based in Lahore, Pakistan (GMT+5); portfolio header/location copy should reflect Lahore with its timezone (and LHE airport code) rather than any other city. Confidence: 0.9
+- When referencing an employer/company in portfolio copy, prefers the name (and its external-link arrow icon) to be a clickable link to the company's site. Confidence: 0.5
+- Prefers new sections to reuse the existing design language (same fonts, accent color, heading/gradient treatments) so the site stays visually consistent rather than introducing new styles. Confidence: 0.7
+- Prefers to review design and styling with dummy/placeholder text first, then swap in final copy later ("Add some dummy text... I'll change the text later"). Confidence: 0.7
+- Welcomes creative initiative and suggested improvements ("Surprise me") rather than a strictly literal implementation. Confidence: 0.6
+- Holds a high bar for aesthetic polish on personal/pet projects — wants the result "consistent and beautiful". Confidence: 0.5
+- Prefers a fun, playful tone in personal-site copy ("Keep it fun") over dry/formal wording. Confidence: 0.6
+- Wants portfolio copy to reflect their real current interests — AI, agent orchestrations, harnesses, experimenting with new things, and gaming — rather than generic web/TypeScript/React filler. Confidence: 0.6
+- Prefers content collections (e.g. the projects list) to be data-driven via a simple JSON/data file so items can be added or removed without touching component code, with complete entries rendered instantly and incomplete ones skipped. Confidence: 0.7

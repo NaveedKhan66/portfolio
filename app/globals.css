@@ -1,1 +1,54 @@
 @import "tailwindcss";
+
+@font-face {
+  font-family: "Helvetica Now Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/HelveticaNowDisplay-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Helvetica Now Display";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/HelveticaNowDisplay-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Helvetica Now Display";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/HelveticaNowDisplay-ExtraBold.woff2") format("woff2");
+}
+
+@theme inline {
+  --font-sans: "Helvetica Now Display", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+  --font-display: "Helvetica Now Display", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+  --font-mono: var(--font-space-grotesk), ui-monospace, monospace;
+  --color-accent: #de5e91;
+  --animate-pill-float: pill-float 12s ease-in-out infinite;
+
+  @keyframes pill-float {
+    0%,
+    100% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+    50% {
+      transform: translate(36px, 22px) rotate(8deg);
+    }
+  }
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background-color: #000;
+}

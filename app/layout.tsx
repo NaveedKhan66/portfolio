@@ -1,11 +1,15 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Space_Grotesk } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-space-grotesk',
+})
 
 export const metadata: Metadata = {
-  title: 'Portfolio',
+  title: 'Naveed — Portfolio',
   description: 'Personal portfolio website',
 }
 
@@ -21,7 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>
+      <body
+        className={`${spaceGrotesk.variable} bg-black font-sans text-white antialiased`}
+      >
         {children}
       </body>
     </html>

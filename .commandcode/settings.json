@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(ls -la \"$COMMANDCODE_SCRATCHPAD\" 2>/dev/null; echo \"---\"; ls -la /private/tmp/commandcode-501/-Users-weeds-Downloads-Documents-portfolio/ef7a5a15-c80a-4f7c-b3d7-1b87cc1ee631/ 2>/dev/null)",
+      "Shell(cp:*)",
+      "Shell(npm:*)",
+      "Shell(agent-browser:*)",
+      "Shell(export AGENT_BROWSER_SESSION=\"$(agent-browser session id --scope worktree --prefix task)\" cd \"$COMMANDCODE_SCRATCHPAD\" agent-browser open http://localhost:3000 --viewport 1600x954 2>&1 | tail -5 agent-browser wait --load networkidle 2>&1 | tail -3 agent-browser screenshot hero.png 2>&1 | tail -5 ls -la hero.png)",
+      "Shell(export AGENT_BROWSER_SESSION=\"$(agent-browser session id --scope worktree --prefix task)\" cd \"$COMMANDCODE_SCRATCHPAD\" agent-browser open http://localhost:3000 --viewport 1600x954 2>&1 | tail -2 agent-browser wait --load networkidle 2>&1 | tail -1 agent-browser screenshot hero2.png 2>&1 | tail -2)",
+      "Shell(export AGENT_BROWSER_SESSION=\"$(agent-browser session id --scope worktree --prefix task)\" cd \"$COMMANDCODE_SCRATCHPAD\" agent-browser open http://localhost:3000 --viewport 1600x954 2>&1 | tail -1 agent-browser wait --load networkidle 2>&1 | tail -1 agent-browser screenshot hero3.png 2>&1 | tail -1)",
+      "Shell(export AGENT_BROWSER_SESSION=\"$(agent-browser session id --scope worktree --prefix task)\"; agent-browser close 2>&1 | tail -1)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}
