@@ -6,13 +6,28 @@
     "year": "2024",
     "description": "An autonomous multi-agent development environment designed to supercharge developer velocity. Features real-time streaming token harnesses, live execution tracing, and an adaptive canvas interface for pairing with autonomous coding agents.",
     "liveUrl": "https://tintash.com/",
-    "githubUrl": "https://github.com/",
+    "repoUrl": "https://github.com/",
     "tags": ["Next.js", "AI Agents", "TypeScript", "Tailwind CSS"],
     "images": [
       "/projects/dummy-1.jpg",
       "/projects/dummy-2.jpg",
       "/projects/dummy-3.jpg",
       "/projects/dummy-4.jpg"
+    ]
+  },
+  {
+    "id": "project-dummy-02",
+    "title": "PULSE ENGINE",
+    "category": "REAL-TIME INFRASTRUCTURE",
+    "year": "2024",
+    "description": "High-throughput event stream orchestration platform delivering ultra low-latency telemetry pipelines and reactive dashboards for distributed workloads.",
+    "liveUrl": "https://tintash.com/",
+    "tags": ["Distributed Systems", "TypeScript", "WebSockets"],
+    "images": [
+      "/projects/dummy-2.jpg",
+      "/projects/dummy-3.jpg",
+      "/projects/dummy-4.jpg",
+      "/projects/dummy-1.jpg"
     ]
   }
 ]

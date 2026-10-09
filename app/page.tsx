@@ -105,17 +105,17 @@ export default function Home() {
           <div className="mt-12 grid gap-12 lg:grid-cols-[1fr_auto] lg:items-end">
             <div className="max-w-2xl border-l-2 border-accent/60 pl-6 text-[clamp(1.125rem,1.5vw,1.375rem)] leading-[1.6] text-white/50">
               <p>
-                <span className="font-bold text-white/90">Hi, I'm Naveed</span> — a
+                <span className="font-bold text-white/90">Hi, I&apos;m Naveed</span> — a
                 senior software engineer based in Lahore who loves turning fuzzy
                 ideas into fast, elegant products. I spend most of my days
                 designing systems, writing code, and obsessing over the details
                 that make software feel effortless.
               </p>
               <p className="mt-6">
-                These days I'm mostly tinkering with AI — agent orchestrations,
+                These days I&apos;m mostly tinkering with AI — agent orchestrations,
                 harnesses, and wiring up cool stuff across different projects. I
                 love breaking new things and putting them back together better,
-                and when I'm not doing that, I'm probably gaming.
+                and when I&apos;m not doing that, I&apos;m probably gaming.
               </p>
             </div>
 

@@ -5,6 +5,7 @@ export interface Project {
   year?: string
   description: string
   liveUrl?: string
+  repoUrl?: string
   githubUrl?: string
   tags?: string[]
   images: string[]
@@ -50,10 +51,18 @@ export function getValidProjects(rawProjects: unknown): Project[] {
         typeof raw.liveUrl === 'string' && raw.liveUrl.trim()
           ? raw.liveUrl.trim()
           : undefined
-      const githubUrl =
-        typeof raw.githubUrl === 'string' && raw.githubUrl.trim()
+
+      const rawRepo =
+        typeof raw.repoUrl === 'string' && raw.repoUrl.trim()
+          ? raw.repoUrl.trim()
+          : typeof raw.githubUrl === 'string' && raw.githubUrl.trim()
           ? raw.githubUrl.trim()
+          : typeof raw.repoLink === 'string' && raw.repoLink.trim()
+          ? raw.repoLink.trim()
+          : typeof raw.repo === 'string' && raw.repo.trim()
+          ? raw.repo.trim()
           : undefined
+
       const tags = Array.isArray(raw.tags)
         ? raw.tags.filter((t): t is string => typeof t === 'string' && t.trim().length > 0)
         : undefined
@@ -65,7 +74,8 @@ export function getValidProjects(rawProjects: unknown): Project[] {
         year,
         description,
         liveUrl,
-        githubUrl,
+        repoUrl: rawRepo,
+        githubUrl: rawRepo,
         tags,
         images,
       }

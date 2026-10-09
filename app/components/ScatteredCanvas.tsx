@@ -32,19 +32,12 @@ export default function ScatteredCanvas({
   const [isTossing, setIsTossing] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const cardIdRef = useRef(0)
 
   // Motion values for interactive physics drag on the active card
   const dragX = useMotionValue(0)
   const dragY = useMotionValue(0)
   const dragRotate = useTransform(dragX, [-200, 0, 200], [-18, 0, 18])
-
-  // Reset to first image when images change (e.g. project switch)
-  useEffect(() => {
-    setActiveIdx(0)
-    setThrownCard(null)
-    dragX.set(0)
-    dragY.set(0)
-  }, [images, dragX, dragY])
 
   const total = images.length
   const currentImage = images[activeIdx] || images[0]
@@ -57,7 +50,7 @@ export default function ScatteredCanvas({
       setThrownCard({
         image: images[activeIdx],
         direction,
-        key: Date.now(),
+        key: ++cardIdRef.current,
       })
 
       setActiveIdx((prev) => (prev + 1) % total)
@@ -76,7 +69,7 @@ export default function ScatteredCanvas({
     setThrownCard({
       image: images[activeIdx],
       direction: 'left',
-      key: Date.now(),
+      key: ++cardIdRef.current,
     })
 
     setActiveIdx((prev) => (prev - 1 + total) % total)
@@ -94,7 +87,7 @@ export default function ScatteredCanvas({
     setThrownCard({
       image: images[activeIdx],
       direction,
-      key: Date.now(),
+      key: ++cardIdRef.current,
     })
 
     setActiveIdx(targetIndex)
