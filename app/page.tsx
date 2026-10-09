@@ -1,8 +1,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
+import ProjectsSection from './components/ProjectsSection'
+import projectsRaw from '@/data/projects.json'
+import { getValidProjects } from '@/lib/projects'
 
 export default function Home() {
+  const validProjects = getValidProjects(projectsRaw)
+
   return (
     <main className="relative isolate overflow-hidden bg-black font-sans text-white">
       {/* ===== Hero ===== */}
@@ -121,6 +126,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ===== Projects ===== */}
+      <ProjectsSection projects={validProjects} />
     </main>
   )
 }

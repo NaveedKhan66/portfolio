@@ -1,0 +1,18 @@
+[
+  {
+    "id": "project-dummy-01",
+    "title": "AGY STUDIO",
+    "category": "AI AGENTS / SYSTEM ARCHITECTURE",
+    "year": "2024",
+    "description": "An autonomous multi-agent development environment designed to supercharge developer velocity. Features real-time streaming token harnesses, live execution tracing, and an adaptive canvas interface for pairing with autonomous coding agents.",
+    "liveUrl": "https://tintash.com/",
+    "githubUrl": "https://github.com/",
+    "tags": ["Next.js", "AI Agents", "TypeScript", "Tailwind CSS"],
+    "images": [
+      "/projects/dummy-1.jpg",
+      "/projects/dummy-2.jpg",
+      "/projects/dummy-3.jpg",
+      "/projects/dummy-4.jpg"
+    ]
+  }
+]
