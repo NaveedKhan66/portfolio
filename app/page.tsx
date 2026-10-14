@@ -2,7 +2,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import ProjectsSection from './components/ProjectsSection'
+import ExperienceSection from './components/ExperienceSection'
 import projectsRaw from '@/data/projects.json'
+import experiences from '@/data/experiences'
 import { getValidProjects } from '@/lib/projects'
 
 export default function Home() {
@@ -52,7 +54,7 @@ export default function Home() {
                 Hi there
               </span>
               <span className="block w-fit text-[clamp(3.25rem,11.1vw,10rem)] leading-[0.9] text-[#e5e5e5]">
-                I am Naveed
+                I'm Naveed
                 <span className="ml-[0.12em] inline-block size-[0.18em] bg-accent" />
               </span>
             </h1>
@@ -129,6 +131,9 @@ export default function Home() {
 
       {/* ===== Projects ===== */}
       <ProjectsSection projects={validProjects} />
+
+      {/* ===== Experience ===== */}
+      <ExperienceSection experiences={experiences} />
     </main>
   )
 }

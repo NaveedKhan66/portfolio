@@ -2,7 +2,14 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
-import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion'
+import {
+  motion,
+  PanInfo,
+  useMotionValue,
+  animate,
+  TargetAndTransition,
+  Transition,
+} from 'framer-motion'
 import { ChevronLeft, ChevronRight, Sparkles, Layers, Play, Pause } from 'lucide-react'
 
 interface ScatteredCanvasProps {
@@ -10,137 +17,275 @@ interface ScatteredCanvasProps {
   projectTitle: string
 }
 
-// Preset natural scatter poses for cards resting in the background
-const SCATTER_POSES = [
-  { x: 105, y: -65, rotate: 11, scale: 0.88, zIndex: 20, opacity: 0.7 },
-  { x: -115, y: 70, rotate: -10, scale: 0.84, zIndex: 15, opacity: 0.6 },
-  { x: -95, y: -80, rotate: -16, scale: 0.8, zIndex: 10, opacity: 0.5 },
-  { x: 95, y: 80, rotate: 14, scale: 0.76, zIndex: 5, opacity: 0.4 },
-  { x: 0, y: -100, rotate: 6, scale: 0.72, zIndex: 4, opacity: 0.35 },
-]
+// Known aspect ratios for preset dummy images to ensure instant server-side / initial layout accuracy
+const KNOWN_ASPECT_RATIOS: Record<string, number> = {
+  '/projects/dummy-1.jpg': 1696 / 2528, // ~0.6709 (portrait)
+  '/projects/dummy-2.jpg': 1600 / 1600, // 1.0 (square)
+  '/projects/dummy-3.jpg': 1600 / 1200, // 1.3333 (landscape 4:3)
+  '/projects/dummy-4.jpg': 1200 / 1200, // 1.0 (square)
+}
+
+interface StackPose {
+  x: number
+  y: number
+  rotate: number
+  scale: number
+  zIndex: number
+  opacity: number
+}
+
+/**
+ * Natural stack poses for cards resting in the deck.
+ * order 0 = active front card (level, center, full scale)
+ * order 1 = card directly behind (peeking top-right)
+ * order 2 = card behind that (peeking top-left)
+ * order 3 = card behind that (peeking top-right/center)
+ */
+function getStackPose(order: number): StackPose {
+  if (order === 0) {
+    return { x: 0, y: 0, rotate: 0, scale: 1, zIndex: 30, opacity: 1 }
+  }
+
+  const presets = [
+    { x: 34, y: -14, rotate: 4.5, scale: 0.95, zIndex: 20, opacity: 0.85 },
+    { x: -32, y: -24, rotate: -4.0, scale: 0.90, zIndex: 15, opacity: 0.65 },
+    { x: 20, y: -32, rotate: 2.5, scale: 0.85, zIndex: 10, opacity: 0.45 },
+  ]
+
+  if (order <= 3) {
+    return presets[order - 1]
+  }
+
+  return {
+    x: (order % 2 === 0 ? -1 : 1) * 12,
+    y: Math.min(-40, -32 - (order - 3) * 6),
+    rotate: (order % 2 === 0 ? -1 : 1) * 1.5,
+    scale: Math.max(0.75, 0.85 - (order - 3) * 0.04),
+    zIndex: Math.max(1, 10 - order),
+    opacity: Math.max(0.2, 0.45 - (order - 3) * 0.1),
+  }
+}
+
+interface TransitionAction {
+  type: 'next' | 'prev'
+  cardIndex: number
+  direction: 'left' | 'right'
+  startPose?: { x: number; y: number; rotate: number }
+}
 
 export default function ScatteredCanvas({
   images,
   projectTitle,
 }: ScatteredCanvasProps) {
   const [activeIdx, setActiveIdx] = useState(0)
-  const [thrownCard, setThrownCard] = useState<{
-    image: string
-    direction: 'left' | 'right' | 'up'
-    key: number
-  } | null>(null)
-  const [isTossing, setIsTossing] = useState(false)
+  const [transitionAction, setTransitionAction] = useState<TransitionAction | null>(null)
+  const [isAnimating, setIsAnimating] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const cardIdRef = useRef(0)
+  const [aspectRatioMap, setAspectRatioMap] = useState<Record<string, number>>(() => ({
+    ...KNOWN_ASPECT_RATIOS,
+  }))
 
-  // Motion values for interactive physics drag on the active card
-  const dragX = useMotionValue(0)
-  const dragY = useMotionValue(0)
-  const dragRotate = useTransform(dragX, [-200, 0, 200], [-18, 0, 18])
+  const containerRef = useRef<HTMLDivElement>(null)
+  const wasDraggedRef = useRef(false)
+  const animTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const total = images.length
-  const currentImage = images[activeIdx] || images[0]
 
-  const handleNext = useCallback(
-    (direction: 'left' | 'right' = 'right') => {
-      if (total <= 1 || isTossing) return
-      setIsTossing(true)
+  // Dedicated motion value for interactive drag rotation on the active card
+  const cardRotate = useMotionValue(0)
 
-      setThrownCard({
-        image: images[activeIdx],
-        direction,
-        key: ++cardIdRef.current,
+  // Record natural aspect ratio when image loads if not already known
+  const handleImageLoad = useCallback((imgSrc: string, e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth, naturalHeight } = e.currentTarget
+    if (naturalWidth && naturalHeight) {
+      const ratio = naturalWidth / naturalHeight
+      setAspectRatioMap((prev) => {
+        if (prev[imgSrc] === ratio) return prev
+        return { ...prev, [imgSrc]: ratio }
       })
+    }
+  }, [])
 
-      setActiveIdx((prev) => (prev + 1) % total)
-
-      setTimeout(() => {
-        setIsTossing(false)
-      }, 480)
-    },
-    [images, activeIdx, total, isTossing]
+  const getImageAspect = useCallback(
+    (imgSrc: string) => aspectRatioMap[imgSrc] || KNOWN_ASPECT_RATIOS[imgSrc] || 16 / 10,
+    [aspectRatioMap]
   )
 
-  const handlePrev = useCallback(() => {
-    if (total <= 1 || isTossing) return
-    setIsTossing(true)
+  // Calculate card dimensions dynamically based on image aspect ratio
+  const getCardSizeStyle = useCallback((aspect: number) => {
+    return {
+      aspectRatio: `${aspect}`,
+      maxWidth: aspect < 1 ? `min(76%, calc(76% * ${aspect}))` : '76%',
+      maxHeight: '76%',
+      width: aspect < 1 ? `calc(72% * ${aspect})` : '72%',
+    }
+  }, [])
 
-    setThrownCard({
-      image: images[activeIdx],
+  // Clean up pending animation timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current)
+    }
+  }, [])
+
+  // Responsive clearance distance for tucking animation
+  const getTuckDistance = useCallback(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      return 200
+    }
+    return 280
+  }, [])
+
+  /**
+   * Advance to the next card:
+   * The current top card sweeps smoothly outward with natural tilt,
+   * ducks behind the stack, and glides into the back position,
+   * while the next card steps forward to the front.
+   */
+  const advanceToNext = useCallback(
+    (
+      direction: 'left' | 'right' = 'right',
+      customStartPose?: { x: number; y: number; rotate: number }
+    ) => {
+      if (total <= 1 || isAnimating) return
+
+      const outgoing = activeIdx
+      const nextIdx = (activeIdx + 1) % total
+
+      setIsAnimating(true)
+      setTransitionAction({
+        type: 'next',
+        cardIndex: outgoing,
+        direction,
+        startPose: customStartPose,
+      })
+      setActiveIdx(nextIdx)
+
+      if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current)
+      animTimeoutRef.current = setTimeout(() => {
+        setTransitionAction(null)
+        setIsAnimating(false)
+      }, 540)
+    },
+    [total, isAnimating, activeIdx]
+  )
+
+  /**
+   * Go back to the previous card:
+   * Pulls the bottom card from the back of the stack outward,
+   * elevates it, and lands it smoothly on top of the deck.
+   */
+  const advanceToPrev = useCallback(() => {
+    if (total <= 1 || isAnimating) return
+
+    const prevIdx = (activeIdx - 1 + total) % total
+
+    setIsAnimating(true)
+    setTransitionAction({
+      type: 'prev',
+      cardIndex: prevIdx,
       direction: 'left',
-      key: ++cardIdRef.current,
     })
+    setActiveIdx(prevIdx)
 
-    setActiveIdx((prev) => (prev - 1 + total) % total)
+    if (animTimeoutRef.current) clearTimeout(animTimeoutRef.current)
+    animTimeoutRef.current = setTimeout(() => {
+      setTransitionAction(null)
+      setIsAnimating(false)
+    }, 540)
+  }, [total, isAnimating, activeIdx])
 
-    setTimeout(() => {
-      setIsTossing(false)
-    }, 480)
-  }, [images, activeIdx, total, isTossing])
+  /**
+   * Switch directly to any card in the stack
+   */
+  const handleSelectCard = useCallback(
+    (targetIdx: number) => {
+      if (targetIdx === activeIdx || isAnimating || total <= 1) return
 
-  const handleSelectScattered = (targetIndex: number) => {
-    if (targetIndex === activeIdx || isTossing) return
-    setIsTossing(true)
+      if (targetIdx === (activeIdx + 1) % total) {
+        advanceToNext('right')
+      } else if (targetIdx === (activeIdx - 1 + total) % total) {
+        advanceToPrev()
+      } else {
+        const forwardDiff = (targetIdx - activeIdx + total) % total
+        if (forwardDiff <= total / 2) {
+          advanceToNext('right')
+        } else {
+          advanceToPrev()
+        }
+      }
+    },
+    [activeIdx, isAnimating, total, advanceToNext, advanceToPrev]
+  )
 
-    const direction = targetIndex > activeIdx ? 'right' : 'left'
-    setThrownCard({
-      image: images[activeIdx],
-      direction,
-      key: ++cardIdRef.current,
-    })
-
-    setActiveIdx(targetIndex)
-    setTimeout(() => {
-      setIsTossing(false)
-    }, 480)
-  }
-
+  // Drag release on active card
   const handleDragEnd = (
     _event: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo
   ) => {
-    const threshold = 75
-    if (info.offset.x > threshold || info.velocity.x > 300) {
-      handleNext('right')
-    } else if (info.offset.x < -threshold || info.velocity.x < -300) {
-      handleNext('left')
-    } else if (info.offset.y < -threshold || info.velocity.y < -300) {
-      handleNext('right')
+    const currentX = info.offset.x
+    const currentY = info.offset.y
+    const currentRotate = cardRotate.get()
+
+    const passedX = Math.abs(currentX) > 75 || Math.abs(info.velocity.x) > 280
+    const passedY = currentY < -75 || info.velocity.y < -280
+
+    if (passedX || passedY) {
+      const direction: 'left' | 'right' = currentX < 0 ? 'left' : 'right'
+      cardRotate.set(0)
+      advanceToNext(direction, {
+        x: currentX,
+        y: currentY,
+        rotate: currentRotate,
+      })
+    } else {
+      animate(cardRotate, 0, { type: 'spring', stiffness: 350, damping: 28 })
     }
-    dragX.set(0)
-    dragY.set(0)
+
+    setTimeout(() => {
+      wasDraggedRef.current = false
+    }, 120)
   }
 
-  // Keyboard navigation when focusing canvas
+  const handleCardClick = (clickedIdx: number) => {
+    if (wasDraggedRef.current) {
+      wasDraggedRef.current = false
+      return
+    }
+
+    if (total <= 1 || isAnimating) return
+
+    if (clickedIdx === activeIdx) {
+      advanceToNext('right')
+    } else {
+      handleSelectCard(clickedIdx)
+    }
+  }
+
+  // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!containerRef.current?.contains(document.activeElement)) return
       if (e.key === 'ArrowRight' || e.key === 'Space') {
         e.preventDefault()
-        handleNext('right')
+        advanceToNext('right')
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault()
-        handlePrev()
+        advanceToPrev()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleNext, handlePrev])
+  }, [advanceToNext, advanceToPrev])
 
-  // Optional auto-play timer
+  // Slideshow auto-play timer
   useEffect(() => {
-    if (!isPlaying || total <= 1) return
+    if (!isPlaying || isAnimating || total <= 1) return
     const timer = setInterval(() => {
-      handleNext('right')
-    }, 3500)
+      advanceToNext('right')
+    }, 2800)
     return () => clearInterval(timer)
-  }, [isPlaying, total, handleNext])
-
-  // Determine non-active cards to render scattered in the background
-  const scatteredCards = images
-    .map((img, index) => ({ img, index }))
-    .filter((item) => item.index !== activeIdx)
+  }, [isPlaying, isAnimating, total, advanceToNext])
 
   return (
     <div
@@ -152,189 +297,187 @@ export default function ScatteredCanvas({
       {/* Canvas Frame / Light-table container */}
       <div className="relative aspect-[4/3] w-full min-h-[440px] sm:min-h-[500px] lg:min-h-[560px] overflow-hidden rounded-3xl border border-white/10 bg-[#080808]/90 backdrop-blur-2xl shadow-2xl shadow-black/80 flex items-center justify-center p-6 sm:p-10">
         {/* Subtle grid background */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:24px_24px] opacity-50" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] [background-size:24px_24px] opacity-50 z-[1]" />
 
         {/* Ambient atmospheric glow */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[380px] rounded-full bg-accent/10 blur-[120px]" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 size-[380px] rounded-full bg-accent/10 blur-[120px] z-[1]" />
 
         {/* Corner studio marks */}
-        <div className="pointer-events-none absolute top-4 left-4 font-mono text-[10px] text-white/20">
+        <div className="pointer-events-none absolute top-4 left-4 font-mono text-[10px] text-white/20 z-10">
           + 01
         </div>
-        <div className="pointer-events-none absolute top-4 right-4 font-mono text-[10px] text-white/20">
+        <div className="pointer-events-none absolute top-4 right-4 font-mono text-[10px] text-white/20 z-10">
           CANVAS • SCATTER DECK
         </div>
-        <div className="pointer-events-none absolute bottom-4 left-4 font-mono text-[10px] text-white/20">
+        <div className="pointer-events-none absolute bottom-4 left-4 font-mono text-[10px] text-white/20 z-10">
           + LHE
         </div>
-        <div className="pointer-events-none absolute bottom-4 right-4 font-mono text-[10px] text-white/20">
+        <div className="pointer-events-none absolute bottom-4 right-4 font-mono text-[10px] text-white/20 z-10">
           + 04
         </div>
 
-        {/* Scattered Background Cards */}
-        {scatteredCards.map((item, i) => {
-          const pose = SCATTER_POSES[i % SCATTER_POSES.length]
+        {/*
+          THE PERSISTENT CARD STACK
+          Every card has clean native Framer Motion drag without shared state pollution,
+          ensuring images never get stuck at non-zero offsets or shifts.
+        */}
+        {images.map((img, index) => {
+          const order = (index - activeIdx + total) % total
+          const pose = getStackPose(order)
+          const isCurrentActive = order === 0
+          const isTransitioningCard = transitionAction?.cardIndex === index
+          const tuckDistance = getTuckDistance()
+          const aspect = getImageAspect(img)
+          const sizeStyle = getCardSizeStyle(aspect)
+
+          let animationTarget: TargetAndTransition
+          let transitionConfig: Transition
+
+          if (isTransitioningCard && transitionAction) {
+            if (transitionAction.type === 'next') {
+              // Outgoing card sweeps out, ducks behind the stack, and tucks into the back pose
+              const destPose = getStackPose(total - 1)
+              const startX = transitionAction.startPose?.x ?? 0
+              const startY = transitionAction.startPose?.y ?? 0
+              const startRotate = transitionAction.startPose?.rotate ?? 0
+              const dirSign = transitionAction.direction === 'right' ? 1 : -1
+
+              animationTarget = {
+                x: [startX, dirSign * tuckDistance, destPose.x],
+                y: [startY, -14, destPose.y],
+                rotate: [startRotate, dirSign * 8, destPose.rotate],
+                scale: [1, 0.96, destPose.scale],
+                opacity: [1, 0.9, destPose.opacity],
+                zIndex: [40, 40, destPose.zIndex, destPose.zIndex],
+              }
+
+              transitionConfig = {
+                duration: 0.52,
+                times: [0, 0.44, 0.48, 1],
+                ease: [0.25, 1, 0.5, 1],
+              }
+            } else {
+              // Incoming card sweeps out from the back, elevates, and glides onto top of stack
+              const sourcePose = getStackPose(total - 1)
+
+              animationTarget = {
+                x: [sourcePose.x, -tuckDistance, 0],
+                y: [sourcePose.y, -14, 0],
+                rotate: [sourcePose.rotate, -8, 0],
+                scale: [sourcePose.scale, 0.98, 1],
+                opacity: [sourcePose.opacity, 0.9, 1],
+                zIndex: [sourcePose.zIndex, 40, 30],
+              }
+
+              transitionConfig = {
+                duration: 0.52,
+                times: [0, 0.44, 1],
+                ease: [0.25, 1, 0.5, 1],
+              }
+            }
+          } else {
+            // Resting or transitioning to new stack position
+            animationTarget = {
+              x: pose.x,
+              y: pose.y,
+              rotate: pose.rotate,
+              scale: pose.scale,
+              opacity: pose.opacity,
+              zIndex: pose.zIndex,
+            }
+
+            transitionConfig = {
+              type: 'spring',
+              stiffness: 260,
+              damping: 26,
+              mass: 0.8,
+            }
+          }
+
+          const isDraggable = isCurrentActive && total > 1 && !isAnimating
+
           return (
             <motion.div
-              key={`scattered-${item.index}-${item.img}`}
-              layout
-              initial={{
-                x: pose.x,
-                y: pose.y,
-                rotate: pose.rotate,
-                scale: pose.scale,
-                opacity: 0,
+              key={`card-${index}`}
+              drag={isDraggable}
+              dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+              dragElastic={0.65}
+              onDragStart={() => {
+                wasDraggedRef.current = false
               }}
-              animate={{
-                x: pose.x,
-                y: pose.y,
-                rotate: pose.rotate,
-                scale: pose.scale,
-                opacity: pose.opacity,
+              onDrag={(_event, info) => {
+                wasDraggedRef.current = true
+                const r = Math.max(-16, Math.min(16, (info.offset.x / 220) * 16))
+                cardRotate.set(r)
               }}
-              whileHover={{
-                scale: pose.scale + 0.05,
-                opacity: 0.95,
-                rotate: pose.rotate > 0 ? pose.rotate - 4 : pose.rotate + 4,
-                transition: { duration: 0.2 },
+              onDragEnd={handleDragEnd}
+              animate={animationTarget}
+              transition={transitionConfig}
+              onClick={() => handleCardClick(index)}
+              style={{
+                ...sizeStyle,
+                ...(isDraggable ? { rotate: cardRotate } : {}),
               }}
-              transition={{
-                type: 'spring',
-                stiffness: 240,
-                damping: 24,
-              }}
-              onClick={() => handleSelectScattered(item.index)}
-              style={{ zIndex: pose.zIndex }}
-              title="Click to bring to front"
-              className="group absolute w-[68%] sm:w-[62%] aspect-[16/10] cursor-pointer rounded-2xl overflow-hidden border border-white/15 bg-zinc-950/80 shadow-2xl shadow-black/80 transition-[border-color,box-shadow] hover:border-accent/50 hover:shadow-accent/20"
+              className={`absolute select-none rounded-2xl overflow-hidden bg-zinc-950 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] ${
+                isCurrentActive
+                  ? 'cursor-grab active:cursor-grabbing border border-white/20'
+                  : 'cursor-pointer border border-white/10'
+              }`}
             >
+              {/* Full edge-to-edge image matching card bounds */}
               <Image
-                src={item.img}
-                alt={`${projectTitle} preview ${item.index + 1}`}
+                src={img}
+                alt={`${projectTitle} preview ${index + 1}`}
                 fill
-                sizes="(max-width: 768px) 70vw, 40vw"
-                className="object-cover pointer-events-none filter brightness-90 contrast-105 transition-transform duration-300 group-hover:scale-105"
+                priority={isCurrentActive}
+                sizes="(max-width: 768px) 75vw, 45vw"
+                className="object-cover pointer-events-none"
+                onLoad={(e) => handleImageLoad(img, e)}
               />
-              <div className="absolute inset-0 bg-black/25 group-hover:bg-transparent transition-colors" />
 
-              {/* Tag indicator */}
-              <div className="absolute bottom-2.5 right-2.5 rounded-md bg-black/75 px-2 py-0.5 font-mono text-[10px] text-white/60 backdrop-blur-sm border border-white/10 group-hover:text-accent group-hover:border-accent/40 transition-colors">
-                #{String(item.index + 1).padStart(2, '0')}
-              </div>
+              {/* Vignette & soft reflection highlights */}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
+
+              {/* Subtle dark veil on background cards for tactile depth */}
+              {!isCurrentActive && (
+                <div className="pointer-events-none absolute inset-0 bg-black/25" />
+              )}
+
+              {/* Active card pill indicators */}
+              {isCurrentActive && (
+                <>
+                  <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1 font-mono text-[11px] font-medium text-white/90 backdrop-blur-md border border-white/15">
+                    <span className="size-1.5 rounded-full bg-accent animate-pulse" />
+                    <span>
+                      {String(index + 1).padStart(2, '0')} /{' '}
+                      {String(total).padStart(2, '0')}
+                    </span>
+                  </div>
+
+                  {total > 1 && (
+                    <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1 font-mono text-[11px] text-white/70 backdrop-blur-md border border-white/15">
+                      <Sparkles className="size-3 text-accent" />
+                      <span>Drag or click to toss</span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Background card layer indicator */}
+              {!isCurrentActive && (
+                <div className="absolute bottom-2.5 right-2.5 rounded-md bg-black/75 px-2 py-0.5 font-mono text-[10px] text-white/60 backdrop-blur-sm border border-white/10">
+                  #{String(index + 1).padStart(2, '0')}
+                </div>
+              )}
             </motion.div>
           )
         })}
-
-        {/* Thrown Away Card (Exiting with momentum physics) */}
-        <AnimatePresence>
-          {thrownCard && (
-            <motion.div
-              key={`thrown-${thrownCard.key}`}
-              initial={{
-                x: 0,
-                y: 0,
-                rotate: 0,
-                scale: 1,
-                opacity: 1,
-              }}
-              animate={{
-                x: thrownCard.direction === 'right' ? 560 : -560,
-                y: -95,
-                rotate: thrownCard.direction === 'right' ? 35 : -35,
-                scale: 0.72,
-                opacity: 0,
-              }}
-              transition={{
-                duration: 0.48,
-                ease: [0.32, 0.72, 0, 1],
-              }}
-              style={{ zIndex: 35 }}
-              className="pointer-events-none absolute w-[72%] sm:w-[66%] aspect-[16/10] rounded-2xl overflow-hidden border border-white/25 shadow-2xl shadow-black/90"
-            >
-              <Image
-                src={thrownCard.image}
-                alt="Discarded card"
-                fill
-                sizes="(max-width: 768px) 75vw, 45vw"
-                className="object-cover"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Active Front Card (Straight, Level, Highest Z-Index) */}
-        <motion.div
-          key={`active-${activeIdx}-${currentImage}`}
-          drag={total > 1}
-          dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-          dragElastic={0.65}
-          style={{
-            x: dragX,
-            y: dragY,
-            rotate: dragRotate,
-            zIndex: 30,
-          }}
-          onDragEnd={handleDragEnd}
-          initial={{
-            scale: 0.9,
-            opacity: 0.7,
-          }}
-          animate={{
-            scale: 1,
-            opacity: 1,
-          }}
-          whileHover={{ scale: 1.015 }}
-          whileDrag={{
-            scale: 1.04,
-            cursor: 'grabbing',
-          }}
-          transition={{
-            type: 'spring',
-            stiffness: 280,
-            damping: 24,
-          }}
-          onClick={() => {
-            if (total > 1 && !isTossing) {
-              handleNext('right')
-            }
-          }}
-          className="relative w-[72%] sm:w-[66%] aspect-[16/10] cursor-grab active:cursor-grabbing rounded-2xl overflow-hidden border border-white/20 bg-zinc-950 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.95)] ring-1 ring-white/10 group"
-        >
-          <Image
-            src={currentImage}
-            alt={`${projectTitle} active preview`}
-            fill
-            priority
-            sizes="(max-width: 768px) 75vw, 45vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105 pointer-events-none"
-          />
-
-          {/* Vignette & soft reflection highlights */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
-
-          {/* Top Pill: Image index */}
-          <div className="absolute top-3 left-3 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1 font-mono text-[11px] font-medium text-white/90 backdrop-blur-md border border-white/15">
-            <span className="size-1.5 rounded-full bg-accent animate-pulse" />
-            <span>
-              {String(activeIdx + 1).padStart(2, '0')} /{' '}
-              {String(total).padStart(2, '0')}
-            </span>
-          </div>
-
-          {/* Bottom Pill: Drag / Click hint */}
-          {total > 1 && (
-            <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1 font-mono text-[11px] text-white/70 backdrop-blur-md border border-white/15 transition-opacity group-hover:text-white">
-              <Sparkles className="size-3 text-accent" />
-              <span>Drag or click to toss</span>
-            </div>
-          )}
-        </motion.div>
       </div>
 
       {/* Floating Canvas Controls Dock */}
       {total > 1 && (
         <div className="mt-4 flex items-center justify-between px-2">
-          {/* Scatter Deck Count Indicator & Auto-play toggle */}
+          {/* Deck Count Indicator & Auto-play toggle */}
           <div className="flex items-center gap-3 font-mono text-xs text-white/40">
             <div className="flex items-center gap-1.5">
               <Layers className="size-3.5 text-accent" />
@@ -368,7 +511,7 @@ export default function ScatteredCanvas({
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => handleSelectScattered(idx)}
+                  onClick={() => handleSelectCard(idx)}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     idx === activeIdx
                       ? 'w-6 bg-accent'
@@ -381,18 +524,16 @@ export default function ScatteredCanvas({
 
             <button
               type="button"
-              onClick={handlePrev}
-              disabled={isTossing}
-              className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition-all hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-95 disabled:opacity-40"
+              onClick={advanceToPrev}
+              className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition-all hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-95"
               aria-label="Previous image"
             >
               <ChevronLeft className="size-4" />
             </button>
             <button
               type="button"
-              onClick={() => handleNext('right')}
-              disabled={isTossing}
-              className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition-all hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-95 disabled:opacity-40"
+              onClick={() => advanceToNext('right')}
+              className="flex size-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70 transition-all hover:border-white/30 hover:bg-white/10 hover:text-white active:scale-95"
               aria-label="Next image"
             >
               <ChevronRight className="size-4" />
