@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
 import ProjectsSection from './components/ProjectsSection'
 import ExperienceSection from './components/ExperienceSection'
+import ResumeDownloadBadge from './components/ResumeDownloadBadge'
+import Footer from './components/Footer'
 import projectsRaw from '@/data/projects.json'
 import experiences from '@/data/experiences'
 import { getValidProjects } from '@/lib/projects'
@@ -54,7 +56,7 @@ export default function Home() {
                 Hi there
               </span>
               <span className="block w-fit text-[clamp(3.25rem,11.1vw,10rem)] leading-[0.9] text-[#e5e5e5]">
-                I'm Naveed
+                I&apos;m Naveed
                 <span className="ml-[0.12em] inline-block size-[0.18em] bg-accent" />
               </span>
             </h1>
@@ -93,6 +95,7 @@ export default function Home() {
       {/* ===== About ===== */}
       <section className="relative border-t border-white/10 px-6 py-24 sm:px-10 sm:py-32">
         <div className="mx-auto w-full max-w-5xl">
+        <div>
           <p className="font-mono text-xs font-medium uppercase tracking-[0.25em] text-accent">
             <span className="mr-2.5 inline-block size-1.5 rounded-full bg-accent align-middle" />
             01 / About me
@@ -103,29 +106,35 @@ export default function Home() {
               A little about me
             </span>
           </h2>
+        </div>
 
-          <div className="mt-12 grid gap-12 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div className="max-w-2xl border-l-2 border-accent/60 pl-6 text-[clamp(1.125rem,1.5vw,1.375rem)] leading-[1.6] text-white/50">
-              <p>
-                <span className="font-bold text-white/90">Hi, I&apos;m Naveed</span> — a
-                senior software engineer based in Lahore who loves turning fuzzy
-                ideas into fast, elegant products. I spend most of my days
-                designing systems, writing code, and obsessing over the details
-                that make software feel effortless.
-              </p>
-              <p className="mt-6">
-                These days I&apos;m mostly tinkering with AI — agent orchestrations,
-                harnesses, and wiring up cool stuff across different projects. I
-                love breaking new things and putting them back together better,
-                and when I&apos;m not doing that, I&apos;m probably gaming.
-              </p>
-            </div>
+        <div className="mt-12 grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="max-w-2xl border-l-2 border-accent/60 pl-6 text-[clamp(1.125rem,1.5vw,1.375rem)] leading-[1.6] text-white/50">
+            <p>
+              <span className="font-bold text-white/90">Hi, I&apos;m Naveed</span> — a
+              senior software engineer based in Lahore who loves turning fuzzy
+              ideas into fast, elegant products. I spend most of my days
+              designing systems, writing code, and obsessing over the details
+              that make software feel effortless.
+            </p>
+            <p className="mt-6">
+              These days I&apos;m mostly tinkering with AI — agent orchestrations,
+              harnesses, and wiring up cool stuff across different projects. I
+              love breaking new things and putting them back together better,
+              and when I&apos;m not doing that, I&apos;m probably gaming.
+            </p>
 
-            <div className="flex flex-col gap-3 font-mono text-sm font-medium text-white/40 lg:text-right">
+            <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-2 font-mono text-xs sm:text-sm font-medium text-white/40">
               <p>Shipping since 2022</p>
+              <span className="hidden size-1 rounded-full bg-accent/60 sm:inline-block" />
               <p>Senior Software Engineer</p>
             </div>
           </div>
+
+          <div className="flex items-center justify-center lg:justify-end shrink-0 pt-4 lg:pt-0">
+            <ResumeDownloadBadge />
+          </div>
+        </div>
         </div>
       </section>
 
@@ -134,6 +143,9 @@ export default function Home() {
 
       {/* ===== Experience ===== */}
       <ExperienceSection experiences={experiences} />
+
+      {/* ===== Footer ===== */}
+      <Footer />
     </main>
   )
 }

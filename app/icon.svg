@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bodyGrad" x1="9" y1="17" x2="55" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ec679d"/>
+      <stop offset="1" stop-color="#cf4780"/>
+    </linearGradient>
+    <linearGradient id="flapGrad" x1="9" y1="17" x2="55" y2="33" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#b8356c"/>
+      <stop offset="1" stop-color="#9a2455"/>
+    </linearGradient>
+  </defs>
+  <!-- Squircle container for universal dark/light tab contrast -->
+  <rect width="64" height="64" rx="14" fill="#09090b"/>
+  <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1"/>
+  
+  <!-- Briefcase Handle -->
+  <path d="M22 17V12.5C22 10.5 23.5 9 26 9H38C40.5 9 42 10.5 42 12.5V17" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Briefcase Body in Portfolio Accent (#de5e91 gradient) -->
+  <rect x="9" y="17" width="46" height="35" rx="7" fill="url(#bodyGrad)"/>
+  
+  <!-- Briefcase Flap -->
+  <path d="M9 18C9 17.4477 9.44772 17 10 17H54C54.5523 17 55 17.4477 55 18V24C55 24 44 32 32 32C20 32 9 24 9 24V18Z" fill="url(#flapGrad)"/>
+  
+  <!-- Clasp & Lock Detail -->
+  <rect x="27" y="27" width="10" height="10" rx="2.5" fill="#ffffff"/>
+  <rect x="30" y="31" width="4" height="3" rx="0.8" fill="#18181b"/>
+</svg>

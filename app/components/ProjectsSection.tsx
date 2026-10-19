@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useMemo } from 'react'
+import Link from 'next/link'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Project } from '@/lib/projects'
@@ -93,11 +94,19 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
     return offsets
   }, [titleWords])
 
+  const totalChars = useMemo(() => {
+    return titleWords.reduce((acc, word) => acc + word.length, 0)
+  }, [titleWords])
+
+  const [isTitleHovered, setIsTitleHovered] = useState(false)
+
   const handleNextProject = () => {
+    setIsTitleHovered(false)
     setActiveProjectIdx((prev) => (prev + 1) % totalProjects)
   }
 
   const handlePrevProject = () => {
+    setIsTitleHovered(false)
     setActiveProjectIdx((prev) => (prev - 1 + totalProjects) % totalProjects)
   }
 
@@ -123,6 +132,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
     )
   }
 
+  const liveLink = currentProject.liveUrl || currentProject.livePreviewUrl
   const repoLink = currentProject.repoUrl || currentProject.githubUrl
 
   return (
@@ -199,34 +209,140 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                   <span>{String(totalProjects).padStart(2, '0')}</span>
                 </motion.div>
 
-                {/* Massive Display Title with Exact Aneshk.design Character Pop-Up Animation */}
+                {/* Massive Display Title with Exact Aneshk.design Character Pop-Up Animation and Interactive Flow Animation on Hover */}
                 <div className="mt-4 overflow-hidden py-1">
                   <h3 className="font-display font-extrabold uppercase leading-[0.88] tracking-[-0.02em] text-[clamp(2.75rem,5.5vw,5.5rem)] text-accent">
-                    <div className="flex flex-wrap items-baseline">
-                      {titleWords.map((word, wIdx) => (
-                        <span
-                          key={`word-${currentProject.id}-${wIdx}`}
-                          className="mr-[0.24em] inline-block whitespace-nowrap"
-                        >
-                          {word.split('').map((char, cIdx) => {
-                            const charDelay = (wordOffsets[wIdx] + cIdx) * 0.02
-                            return (
-                              <motion.span
-                                key={`char-${currentProject.id}-${wIdx}-${cIdx}`}
-                                custom={charDelay}
-                                variants={charVariants}
-                                initial="hidden"
-                                animate={isInView ? 'visible' : 'hidden'}
-                                exit="exit"
-                                className="inline-block will-change-transform"
-                              >
-                                {char}
-                              </motion.span>
-                            )
-                          })}
+                    <Link
+                      href={`/projects/${currentProject.slug || currentProject.id}`}
+                      onMouseEnter={() => setIsTitleHovered(true)}
+                      onMouseLeave={() => setIsTitleHovered(false)}
+                      onFocus={() => setIsTitleHovered(true)}
+                      onBlur={() => setIsTitleHovered(false)}
+                      className="group inline-flex flex-wrap items-baseline cursor-pointer transition-opacity focus:outline-none"
+                      title={`View ${currentProject.title} project details`}
+                      aria-label={`View ${currentProject.title} project article`}
+                    >
+                      <div className="flex flex-wrap items-baseline">
+                        {titleWords.map((word, wIdx) => (
+                          <span
+                            key={`word-${currentProject.id}-${wIdx}`}
+                            className="mr-[0.24em] inline-block whitespace-nowrap"
+                          >
+                            {word.split('').map((char, cIdx) => {
+                              const charDelay = (wordOffsets[wIdx] + cIdx) * 0.02
+                              const charGlobalIndex = wordOffsets[wIdx] + cIdx
+                              return (
+                                <motion.span
+                                  key={`char-${currentProject.id}-${wIdx}-${cIdx}`}
+                                  custom={charDelay}
+                                  variants={charVariants}
+                                  initial="hidden"
+                                  animate={isInView ? 'visible' : 'hidden'}
+                                  exit="exit"
+                                  className="inline-block will-change-transform"
+                                >
+                                  <motion.span
+                                    key={`char-flow-${currentProject.id}-${charGlobalIndex}`}
+                                    className="inline-block transition-colors"
+                                    animate={
+                                      isTitleHovered
+                                        ? {
+                                            y: [0, -10, 2, 0],
+                                            color: ['#de5e91', '#ffffff', '#ff9ec4', '#de5e91'],
+                                            scale: [1, 1.08, 1],
+                                            textShadow: [
+                                              '0 0 0px rgba(222,94,145,0)',
+                                              '0 0 16px rgba(222,94,145,0.85)',
+                                              '0 0 0px rgba(222,94,145,0)',
+                                            ],
+                                          }
+                                        : {
+                                            y: 0,
+                                            color: '#de5e91',
+                                            scale: 1,
+                                            textShadow: '0 0 0px rgba(222,94,145,0)',
+                                          }
+                                    }
+                                    transition={
+                                      isTitleHovered
+                                        ? {
+                                            duration: 0.55,
+                                            delay: charGlobalIndex * 0.035,
+                                            repeat: Infinity,
+                                            repeatDelay: 0.85,
+                                            ease: [0.22, 1, 0.36, 1],
+                                          }
+                                        : {
+                                            duration: 0.25,
+                                            ease: 'easeOut',
+                                          }
+                                    }
+                                  >
+                                    {char}
+                                  </motion.span>
+                                </motion.span>
+                              )
+                            })}
+                          </span>
+                        ))}
+
+                        {/* Space & Redirect Arrow Icon Matching Portfolio Colors */}
+                        <span className="ml-[0.16em] inline-block align-baseline">
+                          <motion.span
+                            custom={totalChars * 0.02}
+                            variants={charVariants}
+                            initial="hidden"
+                            animate={isInView ? 'visible' : 'hidden'}
+                            exit="exit"
+                            className="inline-block will-change-transform"
+                          >
+                            <motion.span
+                              className="inline-flex items-center text-accent"
+                              animate={
+                                isTitleHovered
+                                  ? {
+                                      x: [0, 6, 1, 0],
+                                      y: [0, -6, 1, 0],
+                                      scale: [1, 1.2, 1],
+                                      color: ['#de5e91', '#ffffff', '#ff9ec4', '#de5e91'],
+                                      textShadow: [
+                                        '0 0 0px rgba(222,94,145,0)',
+                                        '0 0 18px rgba(222,94,145,0.9)',
+                                        '0 0 0px rgba(222,94,145,0)',
+                                      ],
+                                    }
+                                  : {
+                                      x: 0,
+                                      y: 0,
+                                      scale: 1,
+                                      color: '#de5e91',
+                                      textShadow: '0 0 0px rgba(222,94,145,0)',
+                                    }
+                              }
+                              transition={
+                                isTitleHovered
+                                  ? {
+                                      duration: 0.55,
+                                      delay: totalChars * 0.035,
+                                      repeat: Infinity,
+                                      repeatDelay: 0.85,
+                                      ease: [0.22, 1, 0.36, 1],
+                                    }
+                                  : {
+                                      duration: 0.25,
+                                      ease: 'easeOut',
+                                    }
+                              }
+                            >
+                              <ArrowUpRight
+                                className="size-[0.65em] -translate-y-[0.12em]"
+                                strokeWidth={2.8}
+                              />
+                            </motion.span>
+                          </motion.span>
                         </span>
-                      ))}
-                    </div>
+                      </div>
+                    </Link>
                   </h3>
                 </div>
 
@@ -290,12 +406,19 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
                   variants={secondaryVariants}
                   initial="hidden"
                   animate={isInView ? 'visible' : 'hidden'}
-                  exit="exit"
                   className="mt-8 flex flex-wrap items-center gap-4"
                 >
-                  {currentProject.liveUrl && (
+                  <Link
+                    href={`/projects/${currentProject.slug || currentProject.id}`}
+                    className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-accent shadow-lg shadow-accent/10 transition hover:border-accent hover:bg-accent hover:text-white active:scale-95"
+                  >
+                    <span>Read Article</span>
+                    <ArrowUpRight className="size-4" strokeWidth={2.5} />
+                  </Link>
+
+                  {liveLink && (
                     <a
-                      href={currentProject.liveUrl}
+                      href={liveLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-accent/20 transition hover:brightness-110 active:scale-95"

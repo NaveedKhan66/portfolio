@@ -1,6 +1,7 @@
 [
   {
     "id": "project-dummy-01",
+    "slug": "agy-studio",
     "title": "AGY STUDIO",
     "category": "AI AGENTS / SYSTEM ARCHITECTURE",
     "year": "2024",
@@ -8,6 +9,7 @@
     "liveUrl": "https://tintash.com/",
     "repoUrl": "https://github.com/",
     "tags": ["Next.js", "AI Agents", "TypeScript", "Tailwind CSS"],
+    "articleFile": "agy-studio.md",
     "images": [
       "/projects/dummy-1.jpg",
       "/projects/dummy-2.jpg",
@@ -17,12 +19,13 @@
   },
   {
     "id": "project-dummy-02",
+    "slug": "pulse-engine",
     "title": "PULSE ENGINE",
     "category": "REAL-TIME INFRASTRUCTURE",
     "year": "2024",
     "description": "High-throughput event stream orchestration platform delivering ultra low-latency telemetry pipelines and reactive dashboards for distributed workloads.",
-    "liveUrl": "https://tintash.com/",
     "tags": ["Distributed Systems", "TypeScript", "WebSockets"],
+    "articleFile": "pulse-engine.md",
     "images": [
       "/projects/dummy-2.jpg",
       "/projects/dummy-3.jpg",

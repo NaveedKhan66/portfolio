@@ -9,8 +9,9 @@ export interface Experience {
   role: string
   period: string
   location?: string
-  logo: string
+  logo?: string
   logoBg?: string
+  initial?: string
   description: string[]
   skills?: string[]
   links?: ExperienceLink[]

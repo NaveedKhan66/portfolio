@@ -155,8 +155,8 @@ function TimelineItem({ exp, index }: TimelineItemProps) {
                 onError={() => setImageError(true)}
               />
             ) : (
-              <span className="font-mono text-sm font-bold text-white">
-                {exp.company.charAt(0)}
+              <span className="font-display text-lg font-bold tracking-tight text-white select-none">
+                {exp.initial || exp.company.charAt(0)}
               </span>
             )}
           </motion.div>
@@ -288,8 +288,8 @@ function TimelineItem({ exp, index }: TimelineItemProps) {
                 onError={() => setImageError(true)}
               />
             ) : (
-              <span className="font-mono text-xs font-bold text-white">
-                {exp.company.charAt(0)}
+              <span className="font-display text-sm font-bold tracking-tight text-white select-none">
+                {exp.initial || exp.company.charAt(0)}
               </span>
             )}
           </motion.div>
