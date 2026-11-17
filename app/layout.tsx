@@ -1,12 +1,40 @@
 import type { Metadata, Viewport } from 'next'
 import { Space_Grotesk } from 'next/font/google'
+import localFont from 'next/font/local'
+import dynamic from 'next/dynamic'
 import './globals.css'
-import FloatingContactBar from './components/FloatingContactBar'
+
+const FloatingContactBar = dynamic(
+  () => import('./components/FloatingContactBar')
+)
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-space-grotesk',
+  display: 'swap',
+})
+
+const helveticaNow = localFont({
+  src: [
+    {
+      path: '../public/fonts/HelveticaNowDisplay-Regular.woff2',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../public/fonts/HelveticaNowDisplay-Bold.woff2',
+      weight: '700',
+      style: 'normal',
+    },
+    {
+      path: '../public/fonts/HelveticaNowDisplay-ExtraBold.woff2',
+      weight: '800',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-helvetica-now',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -34,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${spaceGrotesk.variable} bg-black font-sans text-white antialiased`}
+        className={`${spaceGrotesk.variable} ${helveticaNow.variable} bg-black font-sans text-white antialiased`}
       >
         {children}
         <FloatingContactBar />

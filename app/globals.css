@@ -1,33 +1,9 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "Helvetica Now Display";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/HelveticaNowDisplay-Regular.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Helvetica Now Display";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/fonts/HelveticaNowDisplay-Bold.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Helvetica Now Display";
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src: url("/fonts/HelveticaNowDisplay-ExtraBold.woff2") format("woff2");
-}
-
 @theme inline {
-  --font-sans: "Helvetica Now Display", "Helvetica Neue", Helvetica, Arial,
+  --font-sans: var(--font-helvetica-now), "Helvetica Now Display", "Helvetica Neue", Helvetica, Arial,
     sans-serif;
-  --font-display: "Helvetica Now Display", "Helvetica Neue", Helvetica, Arial,
+  --font-display: var(--font-helvetica-now), "Helvetica Now Display", "Helvetica Neue", Helvetica, Arial,
     sans-serif;
   --font-mono: var(--font-space-grotesk), ui-monospace, monospace;
   --color-accent: #de5e91;

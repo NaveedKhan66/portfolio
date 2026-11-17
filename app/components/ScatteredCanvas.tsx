@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import {
@@ -144,7 +144,11 @@ export default function ScatteredCanvas({
   const [internalPlaying, setInternalPlaying] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalIdx, setModalIdx] = useState(0)
-  const [mounted, setMounted] = useState(false)
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
   const [loadedAspects, setLoadedAspects] = useState<Record<string, number>>({})
 
   // Auto-toss is ON by default; can be toggled by user
@@ -160,10 +164,6 @@ export default function ScatteredCanvas({
 
   // Dedicated motion value for interactive drag rotation on the active card
   const cardRotate = useMotionValue(0)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   // Modal body-scroll lock and keyboard listeners
   useEffect(() => {

@@ -1,13 +1,15 @@
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowUpRight } from 'lucide-react'
-import ProjectsSection from './components/ProjectsSection'
-import ExperienceSection from './components/ExperienceSection'
 import ResumeDownloadBadge from './components/ResumeDownloadBadge'
 import Footer from './components/Footer'
 import projectsRaw from '@/data/projects.json'
 import experiences from '@/data/experiences'
 import { getValidProjects } from '@/lib/projects'
+
+const ProjectsSection = dynamic(() => import('./components/ProjectsSection'))
+const ExperienceSection = dynamic(() => import('./components/ExperienceSection'))
 
 export default function Home() {
   const validProjects = getValidProjects(projectsRaw)
@@ -18,11 +20,11 @@ export default function Home() {
       <section className="relative flex min-h-svh flex-col">
         <div className="pointer-events-none absolute left-1/2 top-[12.7vh] -z-10 h-[74.5vh] w-full max-w-[1140px] -translate-x-1/2 scale-[0.8]">
           <Image
-            src="/naveed.jpg"
+            src="/naveed.webp"
             alt="Portrait of Naveed"
             fill
             priority
-            sizes="1140px"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 85vw, 1140px"
             className="object-contain object-[50%_50%] opacity-95 [filter:grayscale(1)_contrast(1.05)] [mask-image:radial-gradient(85%_90%_at_50%_50%,#000_60%,transparent_100%)]"
           />
         </div>
