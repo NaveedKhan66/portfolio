@@ -101,8 +101,8 @@ export default function Home() {
             01 / About me
           </p>
 
-          <h2 className="mt-8 font-display font-extrabold leading-[0.95] tracking-[-0.01em]">
-            <span className="block bg-[linear-gradient(180deg,#e5e5e5_0%,#505050_100%)] bg-clip-text text-[clamp(2.5rem,7vw,5rem)] text-transparent">
+          <h2 className="mt-8 font-display font-extrabold leading-[1.05] tracking-[-0.01em]">
+            <span className="block bg-[linear-gradient(180deg,#ffffff_0%,#a3a3a3_100%)] bg-clip-text text-[clamp(2.5rem,7vw,5rem)] text-transparent pb-1">
               A little about me
             </span>
           </h2>

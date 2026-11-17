@@ -48,8 +48,8 @@ export default function FloatingContactBar() {
   const [copiedPhone, setCopiedPhone] = useState<boolean>(false)
   const [isAtBottom, setIsAtBottom] = useState<boolean>(false)
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({
-    width: 58,
-    height: 180,
+    width: 46,
+    height: 128,
   })
 
   const containerRef = useRef<HTMLElement>(null)
@@ -89,34 +89,10 @@ export default function FloatingContactBar() {
 
   // Detect bottom of page to show scroll-to-top button
   useEffect(() => {
-    const handleCheckBottom = () => {
-      if (typeof window === 'undefined') return
-      const docHeight = document.documentElement.scrollHeight
-      const winHeight = window.innerHeight
-      const scrollTop = window.scrollY
-      const distFromBottom = docHeight - (scrollTop + winHeight)
-      const progress = docHeight > winHeight ? scrollTop / (docHeight - winHeight) : 0
-
-      // Show back-to-top when >= 90% scrolled or within 100px of page bottom
-      setIsAtBottom(progress >= 0.9 || distFromBottom <= 100)
-    }
-
-    handleCheckBottom()
     const unsubscribe = scrollYProgress.on('change', (latest) => {
-      if (latest >= 0.9) {
-        setIsAtBottom(true)
-      } else {
-        handleCheckBottom()
-      }
+      setIsAtBottom(latest >= 0.88)
     })
-
-    window.addEventListener('scroll', handleCheckBottom, { passive: true })
-    window.addEventListener('resize', handleCheckBottom)
-    return () => {
-      unsubscribe()
-      window.removeEventListener('scroll', handleCheckBottom)
-      window.removeEventListener('resize', handleCheckBottom)
-    }
+    return () => unsubscribe()
   }, [scrollYProgress])
 
   // Detect mobile device
@@ -252,19 +228,19 @@ export default function FloatingContactBar() {
   // SVG path for rounded-rectangle progress border
   const pathD = useMemo(() => {
     if (dimensions.width <= 0 || dimensions.height <= 0) return ''
-    return getRoundedRectPath(dimensions.width, dimensions.height, 16, 2)
+    return getRoundedRectPath(dimensions.width, dimensions.height, 14, 1.5)
   }, [dimensions])
 
   return (
     <aside
       aria-label="Quick contact sidebar"
-      className="fixed right-4 sm:right-6 bottom-6 sm:bottom-8 z-50 flex flex-col items-center"
+      className="fixed right-3 sm:right-5 bottom-5 sm:bottom-6 z-50 flex flex-col items-center"
     >
       {/* Floating dock with animated progress border */}
       <nav
         ref={containerRef}
         aria-label="Direct contact options"
-        className="relative flex flex-col items-center gap-3 sm:gap-4 rounded-2xl bg-[#0d0d0d]/95 p-2.5 sm:p-3 shadow-2xl backdrop-blur-md ring-1 ring-white/5 transition-all duration-300"
+        className="relative flex flex-col items-center gap-2 sm:gap-2.5 rounded-xl bg-[#0d0d0d]/95 p-1.5 sm:p-2 shadow-xl backdrop-blur-md ring-1 ring-white/5 transition-all duration-300"
       >
         {/* SVG Border Progress Bar */}
         <svg
@@ -275,18 +251,18 @@ export default function FloatingContactBar() {
           <path
             d={pathD}
             fill="none"
-            stroke="rgba(255, 255, 255, 0.12)"
-            strokeWidth={2}
+            stroke="rgba(255, 255, 255, 0.1)"
+            strokeWidth={1.5}
           />
           {/* Animated Accent Progress Border (matches site accent #de5e91) */}
           <motion.path
             d={pathD}
             fill="none"
             stroke="#de5e91"
-            strokeWidth={2.5}
+            strokeWidth={1.8}
             strokeLinecap="round"
             style={{ pathLength: smoothProgress }}
-            className="drop-shadow-[0_0_8px_rgba(222,94,145,0.6)]"
+            className="drop-shadow-[0_0_5px_rgba(222,94,145,0.45)]"
           />
         </svg>
 
@@ -295,7 +271,7 @@ export default function FloatingContactBar() {
           {isAtBottom && (
             <motion.div
               initial={{ opacity: 0, height: 0, scale: 0.8, marginBottom: 0 }}
-              animate={{ opacity: 1, height: 'auto', scale: 1, marginBottom: 4 }}
+              animate={{ opacity: 1, height: 'auto', scale: 1, marginBottom: 2 }}
               exit={{ opacity: 0, height: 0, scale: 0.8, marginBottom: 0 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               className="group relative flex flex-col items-center overflow-hidden"
@@ -304,22 +280,22 @@ export default function FloatingContactBar() {
                 type="button"
                 onClick={handleScrollToTop}
                 aria-label="Scroll to top of website"
-                className="flex size-10 items-center justify-center rounded-xl border border-transparent text-[#b7ac98] transition-all duration-200 hover:border-accent/40 hover:bg-accent/20 hover:text-accent hover:shadow-lg hover:shadow-accent/20 active:scale-95"
+                className="flex size-8 items-center justify-center rounded-lg border border-transparent text-[#b7ac98] transition-all duration-200 hover:border-accent/40 hover:bg-accent/20 hover:text-accent hover:shadow-lg hover:shadow-accent/20 active:scale-95"
               >
-                <ArrowUp className="size-5 stroke-[2.3] transition-transform duration-200 group-hover:-translate-y-0.5" />
+                <ArrowUp className="size-4 stroke-[2] transition-transform duration-200 group-hover:-translate-y-0.5" />
               </button>
 
               {/* Desktop Tooltip */}
               <div
                 role="tooltip"
-                className="pointer-events-none absolute right-[calc(100%+12px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0e0e12] px-2.5 py-1 text-xs font-medium text-white/90 opacity-0 shadow-lg backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 hidden md:block"
+                className="pointer-events-none absolute right-[calc(100%+10px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0e0e12] px-2 py-0.5 text-[11px] font-medium text-white/90 opacity-0 shadow-lg backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 hidden md:block"
               >
                 Back to top
-                <span className="absolute -right-1 top-1/2 -translate-y-1/2 size-2 rotate-45 border-r border-t border-white/10 bg-[#0e0e12]" />
+                <span className="absolute -right-1 top-1/2 -translate-y-1/2 size-1.5 rotate-45 border-r border-t border-white/10 bg-[#0e0e12]" />
               </div>
 
               {/* Subtle divider below scroll-to-top */}
-              <div className="mt-2.5 h-px w-5 bg-white/15" />
+              <div className="mt-1.5 h-px w-4 bg-white/15" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -332,14 +308,14 @@ export default function FloatingContactBar() {
             onClick={handleEmailClick}
             aria-label={`Show email address ${EMAIL}`}
             aria-expanded={isEmailPopupOpen}
-            className={`flex size-10 items-center justify-center rounded-xl border transition-all duration-200 active:scale-95 ${
+            className={`flex size-8 items-center justify-center rounded-lg border transition-all duration-200 active:scale-95 ${
               isEmailPopupOpen
                 ? 'border-accent/40 bg-accent/20 text-accent shadow-lg shadow-accent/20 ring-1 ring-accent/30'
                 : 'border-transparent text-[#b7ac98] hover:border-accent/40 hover:bg-accent/20 hover:text-accent hover:shadow-lg hover:shadow-accent/20'
             }`}
           >
             <span
-              className="select-none font-sans text-[22px] font-bold leading-none translate-y-[-0.5px]"
+              className="select-none font-sans text-base font-bold leading-none translate-y-[-0.5px]"
               aria-hidden="true"
             >
               @
@@ -350,10 +326,10 @@ export default function FloatingContactBar() {
           {!isEmailPopupOpen && (
             <div
               role="tooltip"
-              className="pointer-events-none absolute right-[calc(100%+12px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0e0e12] px-2.5 py-1 text-xs font-medium text-white/90 opacity-0 shadow-lg backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 hidden md:block"
+              className="pointer-events-none absolute right-[calc(100%+10px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0e0e12] px-2 py-0.5 text-[11px] font-medium text-white/90 opacity-0 shadow-lg backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 hidden md:block"
             >
               Email / Copy
-              <span className="absolute -right-1 top-1/2 -translate-y-1/2 size-2 rotate-45 border-r border-t border-white/10 bg-[#0e0e12]" />
+              <span className="absolute -right-1 top-1/2 -translate-y-1/2 size-1.5 rotate-45 border-r border-t border-white/10 bg-[#0e0e12]" />
             </div>
           )}
 
@@ -369,10 +345,10 @@ export default function FloatingContactBar() {
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.94, x: 10 }}
                 transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute right-[calc(100%+14px)] -bottom-8 sm:-bottom-6 z-50 w-[310px] sm:w-[330px] rounded-2xl border border-white/15 bg-[#0e0e12] p-4 text-left shadow-2xl backdrop-blur-xl ring-1 ring-white/10"
+                className="absolute right-[calc(100%+12px)] -bottom-7 sm:-bottom-5 z-50 w-[290px] sm:w-[310px] rounded-xl border border-white/15 bg-[#0e0e12] p-3.5 text-left shadow-2xl backdrop-blur-xl ring-1 ring-white/10"
               >
                 {/* Connector Arrow pointing to @ icon */}
-                <span className="absolute -right-1.5 bottom-11 size-3 rotate-45 border-r border-t border-white/15 bg-[#0e0e12]" />
+                <span className="absolute -right-1.5 bottom-9 size-2.5 rotate-45 border-r border-t border-white/15 bg-[#0e0e12]" />
 
                 {/* Popover Header */}
                 <div className="flex items-center justify-between pb-2 border-b border-white/10">
@@ -446,7 +422,7 @@ export default function FloatingContactBar() {
                 : `Show phone number ${PHONE_DISPLAY}`
             }
             aria-expanded={isPhonePopupOpen}
-            className={`flex size-10 items-center justify-center rounded-xl border transition-all duration-200 active:scale-95 ${
+            className={`flex size-8 items-center justify-center rounded-lg border transition-all duration-200 active:scale-95 ${
               isPhonePopupOpen
                 ? 'border-accent/40 bg-accent/20 text-accent shadow-lg shadow-accent/20 ring-1 ring-accent/30'
                 : 'border-transparent text-[#b7ac98] hover:border-accent/40 hover:bg-accent/20 hover:text-accent hover:shadow-lg hover:shadow-accent/20'
@@ -455,7 +431,7 @@ export default function FloatingContactBar() {
             <svg
               viewBox="1.5 1.5 21 21"
               fill="currentColor"
-              className="size-5 transition-transform duration-200 group-hover:scale-105"
+              className="size-4 transition-transform duration-200 group-hover:scale-105"
               aria-hidden="true"
             >
               <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.44-5.15-3.75-6.59-6.59l1.97-1.57c.28-.27.36-.67.25-1.02A11.36 11.36 0 0 1 9 4.31c0-.55-.45-1-1-1H4.5c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-.93-.99-.93z" />
@@ -466,10 +442,10 @@ export default function FloatingContactBar() {
           {!isPhonePopupOpen && (
             <div
               role="tooltip"
-              className="pointer-events-none absolute right-[calc(100%+12px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0e0e12] px-2.5 py-1 text-xs font-medium text-white/90 opacity-0 shadow-lg backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 hidden md:block"
+              className="pointer-events-none absolute right-[calc(100%+10px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0e0e12] px-2 py-0.5 text-[11px] font-medium text-white/90 opacity-0 shadow-lg backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 hidden md:block"
             >
               {isMobile ? 'Call now' : 'Phone / Copy'}
-              <span className="absolute -right-1 top-1/2 -translate-y-1/2 size-2 rotate-45 border-r border-t border-white/10 bg-[#0e0e12]" />
+              <span className="absolute -right-1 top-1/2 -translate-y-1/2 size-1.5 rotate-45 border-r border-t border-white/10 bg-[#0e0e12]" />
             </div>
           )}
 
@@ -485,10 +461,10 @@ export default function FloatingContactBar() {
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.94, x: 10 }}
                 transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute right-[calc(100%+14px)] -bottom-8 sm:-bottom-6 z-50 w-[310px] sm:w-[330px] rounded-2xl border border-white/15 bg-[#0e0e12] p-4 text-left shadow-2xl backdrop-blur-xl ring-1 ring-white/10"
+                className="absolute right-[calc(100%+12px)] -bottom-7 sm:-bottom-5 z-50 w-[290px] sm:w-[310px] rounded-xl border border-white/15 bg-[#0e0e12] p-3.5 text-left shadow-2xl backdrop-blur-xl ring-1 ring-white/10"
               >
                 {/* Connector Arrow pointing to phone icon */}
-                <span className="absolute -right-1.5 bottom-11 size-3 rotate-45 border-r border-t border-white/15 bg-[#0e0e12]" />
+                <span className="absolute -right-1.5 bottom-9 size-2.5 rotate-45 border-r border-t border-white/15 bg-[#0e0e12]" />
 
                 {/* Popover Header */}
                 <div className="flex items-center justify-between pb-2 border-b border-white/10">
@@ -557,12 +533,12 @@ export default function FloatingContactBar() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Visit Naveed's LinkedIn Profile"
-            className="flex size-10 items-center justify-center rounded-xl border border-transparent text-[#b7ac98] transition-all duration-200 hover:border-accent/40 hover:bg-accent/20 hover:text-accent hover:shadow-lg hover:shadow-accent/20 active:scale-95"
+            className="flex size-8 items-center justify-center rounded-lg border border-transparent text-[#b7ac98] transition-all duration-200 hover:border-accent/40 hover:bg-accent/20 hover:text-accent hover:shadow-lg hover:shadow-accent/20 active:scale-95"
           >
             <svg
               viewBox="5 3.5 14 16"
               fill="currentColor"
-              className="size-5 transition-transform duration-200 group-hover:scale-105"
+              className="size-4 transition-transform duration-200 group-hover:scale-105"
               aria-hidden="true"
             >
               <path d="M19 19v-5.6a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11H10.67V19h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4V19H19zM6.46 10.33V19h2.74v-8.67H6.46zM7.83 5.5a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28z" />
@@ -572,10 +548,10 @@ export default function FloatingContactBar() {
           {/* Desktop Tooltip */}
           <div
             role="tooltip"
-            className="pointer-events-none absolute right-[calc(100%+12px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0e0e12] px-2.5 py-1 text-xs font-medium text-white/90 opacity-0 shadow-lg backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 hidden md:block"
+            className="pointer-events-none absolute right-[calc(100%+10px)] top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-[#0e0e12] px-2 py-0.5 text-[11px] font-medium text-white/90 opacity-0 shadow-lg backdrop-blur-md transition-opacity duration-200 group-hover:opacity-100 hidden md:block"
           >
             LinkedIn Profile
-            <span className="absolute -right-1 top-1/2 -translate-y-1/2 size-2 rotate-45 border-r border-t border-white/10 bg-[#0e0e12]" />
+            <span className="absolute -right-1 top-1/2 -translate-y-1/2 size-1.5 rotate-45 border-r border-t border-white/10 bg-[#0e0e12]" />
           </div>
         </div>
       </nav>

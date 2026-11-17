@@ -48,6 +48,9 @@ export default async function ProjectPage({ params }: Props) {
 
   const article = await getProjectArticle(project)
   const { prevProject, nextProject } = getProjectNavigation(project.slug)
+  const allProjects = getAllProjects()
+  const projectIdx = allProjects.findIndex((p) => p.slug === project.slug)
+  const indexFormatted = String(Math.max(1, projectIdx + 1)).padStart(2, '0')
   const liveLink = project.liveUrl || project.livePreviewUrl
   const repoLink = project.repoUrl || project.githubUrl
   const subtitle = article.metadata.subtitle || project.description
@@ -94,14 +97,14 @@ export default async function ProjectPage({ params }: Props) {
           {/* Category Tag */}
           <p className="font-mono text-xs font-medium uppercase tracking-[0.25em] text-accent">
             <span className="mr-2.5 inline-block size-1.5 rounded-full bg-accent align-middle animate-pulse" />
-            02 / Case Study
+            {indexFormatted} / Case Study
             {project.year && (
               <span className="ml-3 text-white/40">• {project.year}</span>
             )}
           </p>
 
           {/* Huge Display Title */}
-          <h1 className="mt-6 font-display font-extrabold uppercase leading-[0.9] tracking-[-0.02em] text-[clamp(2.75rem,7vw,6.5rem)] text-white">
+          <h1 className="mt-6 font-display font-extrabold uppercase leading-[0.9] tracking-[-0.02em] text-[clamp(2.75rem,7vw,6.5rem)] text-white break-words [overflow-wrap:anywhere]">
             <span>{project.title}</span>
             <span className="ml-3 inline-block size-[0.16em] bg-accent align-baseline" />
           </h1>
