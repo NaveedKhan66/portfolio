@@ -37,9 +37,39 @@ const helveticaNow = localFont({
   display: 'swap',
 })
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+  ? process.env.NEXT_PUBLIC_SITE_URL.startsWith('http')
+    ? process.env.NEXT_PUBLIC_SITE_URL
+    : `https://${process.env.NEXT_PUBLIC_SITE_URL}`
+  : process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : 'http://localhost:3000'
+
 export const metadata: Metadata = {
-  title: 'Naveed — Portfolio',
-  description: 'Personal portfolio website',
+  metadataBase: new URL(siteUrl),
+  title: 'Naveed — Senior Software Engineer',
+  description:
+    'Senior Software Engineer based in Lahore crafting fast, elegant web products and systems.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Naveed — Senior Software Engineer',
+    description:
+      'Senior Software Engineer based in Lahore crafting fast, elegant web products and systems.',
+    url: '/',
+    siteName: 'Naveed Portfolio',
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Naveed — Senior Software Engineer',
+    description:
+      'Senior Software Engineer based in Lahore crafting fast, elegant web products and systems.',
+  },
   icons: {
     icon: [
       { url: '/icon.svg', type: 'image/svg+xml' },
